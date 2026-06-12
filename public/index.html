@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Language Island Spreadsheet</title>
+  <meta name="description" content="A highly efficient web spreadsheet for language learning. Build your language islands with speech-to-text input, LLM-based translations, and text-to-speech pronunciation.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <!-- FontAwesome Icons for modern aesthetic -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon"><i class="fa-solid fa-earth-americas"></i></div>
+        <div>
+          <h1>Language Island</h1>
+          <p class="subtitle">CSV Spreadsheet Builder</p>
+        </div>
+      </div>
+
+      <div class="language-selector-panel">
+        <div class="selector-group">
+          <label for="native-lang-select"><i class="fa-solid fa-microphone"></i> Native</label>
+          <select id="native-lang-select">
+            <option value="en-US" selected>English (US)</option>
+            <option value="es-ES">Spanish (Spain)</option>
+            <option value="fr-FR">French</option>
+            <option value="de-DE">German</option>
+            <option value="it-IT">Italian</option>
+            <option value="ja-JP">Japanese</option>
+            <option value="zh-CN">Chinese (Simplified)</option>
+            <option value="pt-BR">Portuguese (Brazil)</option>
+          </select>
+        </div>
+
+        <div class="arrow-indicator">
+          <i class="fa-solid fa-arrow-right"></i>
+        </div>
+
+        <div class="selector-group">
+          <label for="target-lang-select"><i class="fa-solid fa-language"></i> Learn (Foreign)</label>
+          <select id="target-lang-select">
+            <option value="es-ES" selected>Spanish</option>
+            <option value="fr-FR">French</option>
+            <option value="de-DE">German</option>
+            <option value="it-IT">Italian</option>
+            <option value="ja-JP">Japanese</option>
+            <option value="zh-CN">Chinese</option>
+            <option value="pt-BR">Portuguese</option>
+            <option value="ko-KR">Korean</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="settings-toggle-btn" class="icon-btn-secondary" title="Settings">
+          <i class="fa-solid fa-sliders"></i>
+        </button>
+        <button id="save-btn" class="primary-btn">
+          <i class="fa-solid fa-floppy-disk"></i> Save to Disk
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+      
+      <!-- Input Panel -->
+      <section class="input-panel card">
+        <div class="panel-section-title">
+          <h3><i class="fa-solid fa-keyboard"></i> Quick Capture</h3>
+          <span id="stt-status-pill" class="badge">STT Ready</span>
+        </div>
+        
+        <div class="capture-controls">
+          <div class="manual-input-wrapper">
+            <input type="text" id="phrase-input" placeholder="Type a sentence in your native tongue..." autocomplete="off">
+            <button id="translate-btn" class="action-btn" title="Translate & Add">
+              <span>Translate</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          
+          <div class="stt-action-wrapper">
+            <button id="record-btn" class="mic-btn" title="Click to Record Speech">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+            <div class="mic-label">
+              <span class="main-label">Voice Dictate</span>
+              <span class="sub-label">Click mic and speak</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice Recognition Overlay / Feedback -->
+        <div id="recording-overlay" class="recording-overlay hidden">
+          <div class="pulse-ring"></div>
+          <div class="recording-content">
+            <div class="mic-indicator-active">
+              <i class="fa-solid fa-microphone"></i>
+            </div>
+            <div class="recording-text">Listening to your speech...</div>
+            <div class="waveform">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <button id="stop-record-btn" class="danger-btn-sm">Stop & Translate</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Spreadsheet Grid Panel -->
+      <section class="spreadsheet-panel card">
+        <div class="spreadsheet-header">
+          <div class="spreadsheet-title-group">
+            <h3><i class="fa-solid fa-table-cells"></i> Island Spreadsheet</h3>
+            <span id="save-indicator" class="sync-status text-muted">
+              <i class="fa-solid fa-circle-check"></i> Loaded & Synced
+            </span>
+          </div>
+
+          <div class="grid-actions">
+            <div class="view-slider-container" id="view-slider">
+              <div class="slider-segment" data-view="formal">Formal</div>
+              <div class="slider-segment active" data-view="both">Both</div>
+              <div class="slider-segment" data-view="informal">Informal</div>
+            </div>
+
+            <div class="speed-slider-container" title="Adjust translation pronunciation speed">
+              <span class="speed-label"><i class="fa-solid fa-gauge-high"></i> <span id="tts-rate-val">1.0x</span></span>
+              <div class="speed-slider-wrapper">
+                <input type="range" id="tts-rate-input" min="0.5" max="1.0" step="0.1" value="1.0" class="tts-slider">
+                <div class="slider-ticks">
+                  <span class="tick" data-val="0.5"></span>
+                  <span class="tick" data-val="0.6"></span>
+                  <span class="tick" data-val="0.7"></span>
+                  <span class="tick" data-val="0.8"></span>
+                  <span class="tick" data-val="0.9"></span>
+                  <span class="tick" data-val="1.0"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="grid-search" placeholder="Search island...">
+            </div>
+            <button id="add-row-btn" class="secondary-btn-sm">
+              <i class="fa-solid fa-plus"></i> Add Row
+            </button>
+          </div>
+        </div>
+
+        <div class="table-scroll-container">
+          <table class="spreadsheet-table" id="spreadsheet-table">
+            <thead>
+              <tr>
+                <th class="col-drag"></th>
+                <th class="col-index">#</th>
+                <th class="col-foreign-formal" id="th-foreign-formal">Formal Translation</th>
+                <th class="col-foreign-informal" id="th-foreign-informal">Casual Translation</th>
+                <th class="col-native" id="th-native">Native Sentence (English)</th>
+                <th class="col-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="spreadsheet-tbody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="spreadsheet-footer">
+          <div class="row-counter">Total Items: <strong id="total-rows-count">0</strong></div>
+          <div class="footer-toggles">
+            <label class="toggle-switch">
+              <input type="checkbox" id="auto-save-toggle" checked>
+              <span class="slider"></span>
+              <span class="toggle-label">Auto-save edits to local file</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Settings Drawer -->
+  <div id="settings-drawer" class="settings-drawer">
+    <div class="drawer-header">
+      <h2><i class="fa-solid fa-gear"></i> System Settings</h2>
+      <button id="settings-close-btn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    
+    <div class="drawer-body">
+      <!-- Interface Theme Settings -->
+      <div class="settings-section">
+        <h3><i class="fa-solid fa-palette"></i> Interface Theme</h3>
+        <p class="section-desc">Toggle the visual style of the application workspace.</p>
+        <div class="theme-toggle-group">
+          <button class="theme-btn active" data-theme="dark" title="Dark Mode"><i class="fa-solid fa-moon"></i> Dark</button>
+          <button class="theme-btn" data-theme="paper" title="Paper Mode"><i class="fa-solid fa-note-sticky"></i> Paper</button>
+          <button class="theme-btn" data-theme="light" title="Light Mode"><i class="fa-solid fa-sun"></i> Light</button>
+        </div>
+      </div>
+
+      <!-- API Model Settings -->
+      <div class="settings-section">
+        <h3><i class="fa-solid fa-key"></i> LLM API Configuration</h3>
+        <p class="section-desc">Choose your translation engine (Gemini, Claude, or GPT) and supply your own API key to translate phrases locally.</p>
+        
+        <div class="form-group">
+          <label for="provider-select">Translation Engine</label>
+          <select id="provider-select">
+            <option value="gemini" selected>Gemini (Google)</option>
+            <option value="gpt">GPT (OpenAI)</option>
+            <option value="claude">Claude (Anthropic)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="api-key-input" id="api-key-label">Gemini API Key</label>
+          <div class="input-action-row">
+            <input type="password" id="api-key-input" placeholder="AIzaSy...">
+            <button id="save-key-btn" class="secondary-btn-sm">Save</button>
+          </div>
+          <div id="key-status-label" class="form-help text-success">
+            <!-- Updated via JS -->
+          </div>
+        </div>
+
+        <div class="form-group margin-top-sm">
+          <label for="custom-instructions-input">Custom Translation Prompt</label>
+          <textarea id="custom-instructions-input" placeholder="e.g. Translate to casual spoken French with Parisian accent context, or use formal Japanese keigo."></textarea>
+          <div class="form-help">Customize translation nuance (slangs, dialects, or level of politeness). Saved client-side.</div>
+        </div>
+      </div>
+
+      <!-- Text to Speech Settings -->
+      <div class="settings-section">
+        <h3><i class="fa-solid fa-volume-high"></i> TTS Voice Preferences</h3>
+        <p class="section-desc">Configure your pronunciation voice and accent behavior.</p>
+
+        <div class="form-group">
+          <label class="toggle-switch">
+            <input type="checkbox" id="always-match-accents-toggle" checked>
+            <span class="slider"></span>
+            <span class="toggle-label" style="font-weight: 600;">Always use matching accents</span>
+          </label>
+          <div class="form-help">Automatically match the voice accent to each row's target language.</div>
+        </div>
+
+        <div class="form-group" id="voice-select-group">
+          <label for="tts-voice-select">Available Voices</label>
+          <select id="tts-voice-select">
+            <option value="">Loading system voices...</option>
+          </select>
+          <div class="form-help">Only voices matching the target language are recommended. Click speaker inside spreadsheet to test.</div>
+        </div>
+      </div>
+
+      <!-- Import/Export CSV -->
+      <div class="settings-section">
+        <h3><i class="fa-solid fa-file-csv"></i> CSV Direct Backup</h3>
+        <p class="section-desc">Download or upload files directly from your browser window.</p>
+        
+        <div class="action-buttons-group">
+          <button id="export-csv-btn" class="secondary-btn"><i class="fa-solid fa-download"></i> Export CSV File</button>
+          <button id="import-csv-trigger-btn" class="secondary-btn"><i class="fa-solid fa-upload"></i> Import CSV File</button>
+          <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+        </div>
+      </div>
+
+      <!-- Help Guidelines -->
+      <div class="settings-section help-section">
+        <h3><i class="fa-solid fa-circle-question"></i> Keyboard & Tips</h3>
+        <ul class="help-list">
+          <li>Double click any cell to edit. Press <strong>Enter</strong> to commit, or <strong>Esc</strong> to cancel.</li>
+          <li>Changes saved to a local workspace file: <code>language_island.csv</code> automatically.</li>
+          <li>First Column is <strong>Foreign Language</strong>, Second is <strong>Native Tongue</strong>. Ideal format for imports/exports.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+  
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- JS Code -->
+  <script src="app.js"></script>
+</body>
+</html>
