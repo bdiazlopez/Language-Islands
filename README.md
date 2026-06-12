@@ -1,10 +1,10 @@
 # Language Island Spreadsheet Builder
 
-A highly efficient, single-page web app to create and curate language learning "islands". Dictate/type phrases in your native tongue, automatically translate them using LLM APIs, and click cells to hear accurate pronunciations.
+A free, open-source single-page web app to create and curate language learning "islands". Dictate/type phrases in your native tongue, automatically translate them using LLM APIs, and click cells to hear accurate pronunciations.
 
 ---
 
-## ⚡ 15-Second Quick Start
+## 15-Second Quick Start
 
 1. **Spin up the app:**
    ```bash
@@ -18,7 +18,7 @@ A highly efficient, single-page web app to create and curate language learning "
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v16.0.0 or higher)
@@ -48,7 +48,7 @@ A highly efficient, single-page web app to create and curate language learning "
 
 ---
 
-## 🔧 LLM Provider Setup Guide
+## LLM Provider Setup Guide
 
 After cloning this repository, you can configure your desired LLM translation engine (Gemini, Claude, or GPT) in two ways:
 
@@ -80,12 +80,12 @@ If you prefer not to enter keys in the browser, you must configure both keys and
 
 ---
 
-## 📂 Project Architecture
+## Project Architecture
 
 ```
-/language_island/
+/root
 ├── package.json          # Node project dependencies & npm scripts
-├── server.js             # Express API server (CSV parser/writer & Gemini proxy)
+├── server.js             # Express API server (CSV parser/writer & LLM proxy)
 ├── .env.example          # Environment variables template
 ├── language_island.csv   # The workspace spreadsheet CSV (managed by server)
 └── public/               # Static web client assets
@@ -94,9 +94,24 @@ If you prefer not to enter keys in the browser, you must configure both keys and
     └── app.js            # Frontend app logic (STT, TTS, state management)
 ```
 
+### System Architecture Flow
+
+The application is structured with a lightweight, local client-server architecture:
+
+1. **Client (Browser)**:
+   - Offers a responsive, premium spreadsheet interface for curating phrases.
+   - Captures speech input in the user's native tongue using the native browser Web Speech API (`webkitSpeechRecognition`).
+   - Recommends and plays pronunciation audio using browser-native Speech Synthesis (`window.speechSynthesis`).
+   - Caches settings and API keys locally in the browser (`localStorage`), preventing server-side logging of private keys.
+   
+2. **Server (Node.js/Express)**:
+   - Manages reading/writing spreadsheet rows directly to the workspace `language_island.csv` file.
+   - Exposes REST endpoints to query/save spreadsheet state and acts as a translation middleware proxy.
+   - Proxies translation requests to LLM APIs (Gemini, Claude, or GPT), automatically falling back to environment variables (`.env`) if client-side keys are absent.
+
 ---
 
-## 🔌 API Documentation (Backend endpoints in `server.js`)
+## API Documentation (Backend endpoints in `server.js`)
 
 ### 1. `GET /api/csv`
 Loads rows from `language_island.csv` in the project root.
@@ -105,12 +120,12 @@ Loads rows from `language_island.csv` in the project root.
   {
     "success": true,
     "rows": [
-      ["¿Dónde está la biblioteca?", "Where is the library?"],
-      ["Me gustaría un café, por favor.", "I would like a coffee, please."]
+      ["¿Dónde está la biblioteca?", "", "Where is the library?", "Spanish"],
+      ["Me gustaría un café, por favor.", "Me gustaría un cafecito, por favor.", "I would like a coffee, please.", "Spanish"]
     ]
   }
   ```
-- *Behavior:* If `language_island.csv` does not exist, the server creates the file, writes the headers `Foreign Language,Native Tongue`, and returns an empty rows array `[]`.
+- *Behavior:* If `language_island.csv` does not exist, the server creates the file, writes the headers `Foreign (Formal),Foreign (Informal),Native Tongue,Target Language`, and returns an empty rows array `[]`.
 
 ### 2. `POST /api/csv`
 Overwrites the content of `language_island.csv` with the updated rows.
@@ -118,8 +133,8 @@ Overwrites the content of `language_island.csv` with the updated rows.
   ```json
   {
     "rows": [
-      ["¿Dónde está la biblioteca?", "Where is the library?"],
-      ["Me gustaría un café, por favor.", "I would like a coffee, please."]
+      ["¿Dónde está la biblioteca?", "", "Where is the library?", "Spanish"],
+      ["Me gustaría un café, por favor.", "Me gustaría un cafecito, por favor.", "I would like a coffee, please.", "Spanish"]
     ]
   }
   ```
@@ -131,7 +146,7 @@ Overwrites the content of `language_island.csv` with the updated rows.
   ```
 
 ### 3. `POST /api/translate`
-Translates sentences using the selected LLM translation engine (Gemini, Claude, or GPT).
+Translates sentences using the selected LLM translation engine (Gemini, Claude, or GPT) and yields both formal and informal translations.
 - **Request Format:**
   ```json
   {
@@ -139,7 +154,8 @@ Translates sentences using the selected LLM translation engine (Gemini, Claude, 
     "targetLanguage": "Spanish",
     "nativeLanguage": "English",
     "provider": "gemini" | "gpt" | "claude",
-    "clientApiKey": "OPTIONAL_CLIENT_API_KEY"
+    "clientApiKey": "OPTIONAL_CLIENT_API_KEY",
+    "customInstructions": "OPTIONAL_CUSTOM_INSTRUCTIONS"
   }
   ```
 - **Response Format:**
@@ -147,13 +163,14 @@ Translates sentences using the selected LLM translation engine (Gemini, Claude, 
   {
     "success": true,
     "correctedNative": "Where is the library?",
-    "translation": "¿Dónde está la biblioteca?"
+    "formal": "¿Dónde está la biblioteca?",
+    "informal": "¿Dónde está la biblioteca?"
   }
   ```
 
 ---
 
-## 🎙️ Speech Engine Integrations
+## Speech Engine Integrations
 
 ### Speech-to-Text (STT)
 - Uses the browser's built-in Web Speech API `webkitSpeechRecognition`.
@@ -167,7 +184,7 @@ Translates sentences using the selected LLM translation engine (Gemini, Claude, 
 
 ---
 
-## 🛠️ Guide for Future AI Agents
+## Guide for Future AI Agents
 
 If you are an AI agent tasked with modifying or extending this application, please follow these instructions:
 
@@ -176,7 +193,7 @@ If you are an AI agent tasked with modifying or extending this application, plea
    - Update `server.js`'s CSV parsing and writing to map additional indices.
    - Adjust the table header in `index.html`.
    - Update `app.js`'s `renderTable` and `enterCellEditMode` methods to handle the new column index.
-   - Keep in mind the user requested the core CSV to be structured as: `Foreign Language` as column 1, and `Native Tongue` as column 2.
+   - Keep in mind that the core CSV is structured as: `Foreign Language` as column 1, and `Native Tongue` as column 2.
 
 2. **Customizing the Translation System Prompt:**
    - In `server.js`'s `/api/translate` endpoint, the prompt specifies strict output rules (no surrounding quotes, explanations, or leading numbers). Keep these instructions strict so translations integrate seamlessly into the spreadsheet.
@@ -189,3 +206,10 @@ If you are an AI agent tasked with modifying or extending this application, plea
 
 4. **Spreadsheet Editing Flow:**
    - Single-cell edit uses double-click inside `app.js`. It replaces the cell text with an HTML input, captures events (`Enter` to save, `Escape` to cancel, `Blur` to save), and maps updates back to the `appState.rows` array. Ensure any cell edits trigger auto-saves to remain synchronous with the local workspace.
+
+---
+
+## License
+
+This project is public on GitHub and is available as free open-source software under the [MIT License](LICENSE).
+
